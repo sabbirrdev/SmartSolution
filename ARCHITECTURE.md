@@ -29,3 +29,12 @@
 - `lib/i18n.js` — localization data/helpers.
 - `lib/themes.js` — theme registry/helpers.
 - `app/page.jsx` — shared shell plus reusable tool components. The tools are rendered independently, so the dashboard is not the only place where functionality exists.
+
+
+## Current shell
+- Desktop navigation is a collapsible sticky rail with its own scroll container.
+- Mobile navigation is an independently scrolling slide-in drawer.
+- The footer always credits Development by MSR Technologies.
+- PC Builder has been removed from the product surface.
+- `/login` and `/register` are standalone localized pages; the dashboard no longer uses an authentication modal.
+- Dark theme uses shared CSS variables for foreground/muted/control colors.

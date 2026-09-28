@@ -25,7 +25,6 @@ Open `http://localhost:3000`.
 - Unicode → Bijoy client-side workflow
 - Signature canvas
 - Bangladesh legal document templates
-- PC builder and compatibility engine
 - Age / VAT / EMI calculators
 - QR-style local generator, password generator and text analytics
 - AI Studio with session-only API-key field and Demo Mode

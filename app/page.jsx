@@ -1,11 +1,12 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Activity, ArrowDown, ArrowLeft, ArrowRight, ArrowUpRight, BadgeCheck, BarChart3,
   Bell, BookOpen, Calculator, Camera, Check, ChevronDown, Clipboard,
   Copy, CreditCard, Download, Edit3, FileCheck2, FileImage, FilePenLine,
-  FileText, Fingerprint, Globe2, HardDrive, Headphones, Image as ImageIcon,
+  FileText, Fingerprint, Globe2,  Headphones, Image as ImageIcon,
   KeyRound, Languages, LayoutDashboard, Loader2, Lock, LogIn, LogOut,
   Menu, MessageSquareText, Mic, Moon, MoreHorizontal, Palette, PanelLeft,
   Paperclip, PenLine, Printer, QrCode, RefreshCw, Save, Search, Send,
@@ -34,52 +35,11 @@ const TOOL_GROUPS = [
     ["ai","AI Document Studio","Letters, notices & applications"]
   ]},
   { id: "business", label: "Business & Finance", icon: Wallet, tools: [
-    ["pc","PC Builder","BD hardware quotation"],
     ["calculator","Calculator Pack","Age · VAT · EMI"],
     ["toolkit","Shop Toolkit","QR · password · text utilities"],
     ["profile","Operator Profile","Wallet & transaction center"]
   ]}
 ];
-
-const HARDWARE = {
-  cpu: [
-    {name:"Intel Core i3-12100F", socket:"LGA1700", price:8500, power:58},
-    {name:"Intel Core i5-12400", socket:"LGA1700", price:18500, power:65},
-    {name:"Intel Core i5-14400", socket:"LGA1700", price:26500, power:65},
-    {name:"AMD Ryzen 5 5600", socket:"AM4", price:14500, power:65},
-    {name:"AMD Ryzen 5 7600", socket:"AM5", price:24500, power:65}
-  ],
-  motherboard: [
-    {name:"MSI H610M-E", socket:"LGA1700", ram:"DDR4", price:7200},
-    {name:"Gigabyte B760M DS3H", socket:"LGA1700", ram:"DDR5", price:16500},
-    {name:"MSI B550M PRO", socket:"AM4", ram:"DDR4", price:10500},
-    {name:"Gigabyte B650M DS3H", socket:"AM5", ram:"DDR5", price:18500}
-  ],
-  ram: [
-    {name:"8GB DDR4 3200", type:"DDR4", price:2300},
-    {name:"16GB DDR4 3200", type:"DDR4", price:4300},
-    {name:"16GB DDR5 5200", type:"DDR5", price:5200},
-    {name:"32GB DDR5 6000", type:"DDR5", price:9800}
-  ],
-  gpu: [
-    {name:"Integrated / None", price:0, power:0},
-    {name:"NVIDIA GTX 1650 4GB", price:16500, power:75},
-    {name:"AMD RX 6600 8GB", price:29000, power:132},
-    {name:"NVIDIA RTX 4060 8GB", price:42000, power:115}
-  ],
-  storage: [
-    {name:"256GB NVMe SSD", price:3000},
-    {name:"512GB NVMe SSD", price:5200},
-    {name:"1TB NVMe SSD", price:9000},
-    {name:"1TB HDD", price:5600}
-  ],
-  psu: [
-    {name:"450W 80+ Bronze", watts:450, price:4200},
-    {name:"550W 80+ Bronze", watts:550, price:5200},
-    {name:"650W 80+ Bronze", watts:650, price:6900},
-    {name:"750W 80+ Gold", watts:750, price:9800}
-  ]
-};
 
 const LEGAL_TEMPLATES = {
   rent: {
@@ -215,18 +175,17 @@ function Topbar({theme,setTheme,lang,setLang,cursor,setCursor,user,onAuth,onMenu
 function Sidebar({active,setActive,open,onClose,collapsed,setCollapsed}){
  const t=useT();
  const tx={tools:t("Tools")};
- return <aside className={`${open?"translate-x-0":"-translate-x-full"} ${collapsed?"sidebar-collapsed w-[84px]":"w-72"} fixed inset-y-0 left-0 z-40 border-r border-[var(--border)] bg-[var(--bg)]/95 p-3 pt-20 backdrop-blur-2xl transition-all lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:translate-x-0 lg:bg-transparent`}>
-   <div className="mb-3 flex items-center justify-between"><b className={collapsed?"sr-only":""}>{tx.tools}</b><div className="flex gap-1"><button onClick={()=>setCollapsed(!collapsed)} className="icon-btn hidden lg:grid" title={t(collapsed?"Expand navigation":"Collapse navigation")}><PanelLeft size={17}/></button><button onClick={onClose} className="icon-btn lg:hidden"><X/></button></div></div>
-   <div className="space-y-5 overflow-y-auto pr-1">
-    {TOOL_GROUPS.map(g=><div key={g.id}><div className={`mb-2 px-2 text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--muted)] ${collapsed?"sr-only":""}`}>{t(g.label)}</div>
-      <div className="space-y-1">{g.tools.map(([id,label,desc])=><button key={id} onClick={()=>{setActive(id);onClose()}} title={collapsed?t(label):undefined} className={`tool-nav ${collapsed?"justify-center":""} ${active===id?"active":""}`}><ToolIcon id={id}/><span className={`min-w-0 flex-1 text-left ${collapsed?"hidden":""}`}><b>{t(label)}</b><small>{t(desc)}</small></span>{active===id&&<ChevronDown size={15}/>}</button>)}</div>
+ return <aside className={`app-sidebar ${open?"mobile-open":""} ${collapsed?"sidebar-collapsed":""}`}>
+   <div className="sidebar-head"><b className={collapsed?"sr-only":""}>{tx.tools}</b><div className="flex gap-1"><button onClick={()=>setCollapsed(!collapsed)} className="icon-btn hidden lg:grid" title={t(collapsed?"Expand navigation":"Collapse navigation")}><PanelLeft size={17}/></button><button onClick={onClose} className="icon-btn lg:hidden" aria-label={t("Close navigation")}><X/></button></div></div>
+   <nav className="sidebar-scroll" aria-label={tx.tools}>
+    {TOOL_GROUPS.map(g=><div key={g.id} className="sidebar-group"><div className={`mb-2 px-2 text-[10px] font-extrabold uppercase tracking-[.18em] text-[var(--muted)] ${collapsed?"sr-only":""}`}>{t(g.label)}</div>
+      <div className="space-y-1">{g.tools.map(([id,label,desc])=><button key={id} onClick={()=>{setActive(id);onClose()}} title={collapsed?t(label):undefined} className={`tool-nav ${collapsed?"justify-center":""} ${active===id?"active":""}`}><ToolIcon id={id}/><span className={`min-w-0 flex-1 text-left ${collapsed?"hidden":""}`}><b>{t(label)}</b><small>{t(desc)}</small></span>{active===id&&!collapsed&&<ChevronDown size={15}/>}</button>)}</div>
     </div>)}
-   </div>
+   </nav>
  </aside>
 }
-
 function ToolIcon({id}){
- const t=useT(); const M={scaler:BadgeCheck,ink:Printer,photo:Camera,convert:ImageIcon,font:Languages,signature:PenLine,legal:FileText,ai:Wand2,pc:HardDrive,calculator:Calculator,toolkit:QrCode,profile:User}; const I=M[id]||Zap; return <I size={18}/> }
+ const t=useT(); const M={scaler:BadgeCheck,ink:Printer,photo:Camera,convert:ImageIcon,font:Languages,signature:PenLine,legal:FileText,ai:Wand2,calculator:Calculator,toolkit:QrCode,profile:User}; const I=M[id]||Zap; return <I size={18}/> }
 
 function ShellCard({children,className=""}){
  const t=useT();return <section className={`glass-card ${className}`}>{children}</section>}
@@ -318,19 +277,6 @@ function Legal(){
  {doc&&<div className="mt-4 flex justify-end gap-2"><DownloadButton onClick={()=>downloadBlob(doc,`${tpl.title}.txt`)}>{t("Download")}</DownloadButton><button onClick={()=>window.print()} className="secondary-btn"><Printer size={16}/> Print / PDF</button></div>}</ShellCard>
 }
 
-function PCBuilder(){
- const t=useT();
- const [pick,setPick]=useState({cpu:0,motherboard:0,ram:0,gpu:0,storage:0,psu:0});
- const selected=Object.fromEntries(Object.keys(HARDWARE).map(k=>[k,HARDWARE[k][pick[k]]]));
- const total=Object.values(selected).reduce((s,x)=>s+(x?.price||0),0);
- const warnings=[]; if(selected.cpu?.socket!==selected.motherboard?.socket)warnings.push("CPU socket and motherboard socket do not match."); if(selected.ram?.type!==selected.motherboard?.ram)warnings.push(`Motherboard expects ${selected.motherboard?.ram}; selected RAM is ${selected.ram?.type}.`);
- const watts=selected.cpu?.power+selected.gpu?.power+120; if(selected.psu?.watts<watts)warnings.push(`Estimated system draw is ~${watts}W; selected PSU is only ${selected.psu?.watts}W.`);
- const cash=`SMART SOLUTION — PC CASH MEMO\nMSR Technologies\nDate: ${new Date().toLocaleString("en-BD")}\n\n${Object.entries(selected).map(([k,v])=>`${k.toUpperCase()}: ${v.name} — ${money(v.price)}`).join("\n")}\n\nTOTAL: ${money(total)}\nCompatibility: ${warnings.length?"REVIEW REQUIRED":"PASS"}`;
- return <ShellCard><SectionHeader icon={HardDrive} title={t("BD PC Builder & Quotation Generator")}  subtitle={t("Live BDT quote, socket/RAM/PSU safety checks and printable cash memo.")} />
- <div className="grid gap-5 xl:grid-cols-[1fr_340px]"><div className="grid gap-3 sm:grid-cols-2">{Object.entries(HARDWARE).map(([k,list])=><label className="field" key={k}><span>{t(k)}</span><select value={pick[k]} onChange={e=>setPick({...pick,[k]:+e.target.value})}>{list.map((x,i)=><option key={x.name} value={i}>{x.name} · {money(x.price)}</option>)}</select></label>)}</div>
- <div className="rounded-3xl border border-[var(--border)] bg-[var(--panel)] p-5"><div className="text-xs uppercase tracking-[.15em] text-[var(--muted)]">{t("Build total")}</div><div className="mt-2 text-4xl font-black">{money(total)}</div><div className={`mt-4 rounded-2xl p-3 text-sm ${warnings.length?"status-warn":"status-good"}`}>{warnings.length?<><b>{t("Compatibility review")}</b>{warnings.map(w=><div key={w} className="mt-1">• {w}</div>)}</>:<><Check size={16}/> Components are compatible.</>}</div><div className="mt-4 flex gap-2"><button onClick={()=>downloadBlob(cash,"pc-cash-memo.txt")} className="primary-btn flex-1"><Download size={16}/> Cash Memo</button><button onClick={()=>window.print()} className="secondary-btn"><Printer size={16}/></button></div></div></div></ShellCard>
-}
-
 function CalculatorPack(){
  const t=useT();
  const [tab,setTab]=useState("age"),[dob,setDob]=useState("2000-01-01"),[vat,setVat]=useState(5),[amount,setAmount]=useState(10000),[principal,setPrincipal]=useState(100000),[rate,setRate]=useState(12),[months,setMonths]=useState(24);
@@ -403,10 +349,10 @@ ${t("Sincerely")},
  <div className="terminal"><div className="terminal-head"><span/><span/><span/><b>smart-ai://stream</b></div><pre>{busy&&!out?<span className="shimmer-text">{t("AI is reading local document parameters…")}</span>:out||t("Generated output will stream here…")}</pre>{out&&<div className="terminal-actions"><button onClick={()=>navigator.clipboard?.writeText(out)}><Copy size={14}/> {t("Copy")}</button><button onClick={()=>downloadBlob(out,"smart-ai-draft.txt")}><Download size={14}/> .txt</button><button onClick={()=>downloadBlob(`<html><body><pre>${out}</pre></body></html>`,"smart-ai-draft.doc")}><Download size={14}/> {t("Word")}</button></div>}</div></div></ShellCard>
 }
 
-function Profile({user,setUser,onLogout}){
+function Profile({user,setUser,onLogout,onSignIn}){
  const t=useT();
  const [tab,setTab]=useState("profile"),[password,setPassword]=useState(""),[credits,setCredits]=useLocal("smart-credits",75),[tx,setTx]=useLocal("smart-transactions",[["28 Sep 2026","bKash","+50","Completed"],["18 Sep 2026","Nagad","+25","Completed"]]);
- if(!user)return <ShellCard><SectionHeader icon={User} title={t("Operator Profile & Wallet")}  subtitle={t("Sign in to access your local operator profile, wallet and security controls.")} /><div className="py-12 text-center"><div className="brand-mark mx-auto"><Lock size={19}/></div><h3 className="mt-4 text-xl font-black">{t("Authentication required")}</h3><p className="mx-auto mt-2 max-w-md text-sm text-[var(--muted)]">{t("Your profile is stored locally in this browser and is available after sign-in or registration.")}</p></div></ShellCard>;
+ if(!user)return <ShellCard><SectionHeader icon={User} title={t("Operator Profile & Wallet")}  subtitle={t("Sign in to access your local operator profile, wallet and security controls.")} /><div className="py-12 text-center"><div className="brand-mark mx-auto"><Lock size={19}/></div><h3 className="mt-4 text-xl font-black">{t("Authentication required")}</h3><p className="mx-auto mt-2 max-w-md text-sm text-[var(--muted)]">{t("Your profile is stored locally in this browser and is available after sign-in or registration.")}</p><button onClick={onSignIn} className="primary-btn mt-5"><LogIn size={16}/>{t("Sign in")}</button></div></ShellCard>;
  const topup=(method,amount)=>{setCredits(c=>c+amount);setTx(t=>[[new Date().toLocaleDateString("en-BD"),method,`+${amount}`,"Completed"],...t]);};
 
  const update=e=>setUser({...user,[e.target.name]:e.target.value});
@@ -419,21 +365,12 @@ function Profile({user,setUser,onLogout}){
  </div></div></ShellCard>
 }
 
-function AuthModal({mode,setMode,onClose,onLogin,toast}){
- const t=useT();
- const [loading,setLoading]=useState(false),[step,setStep]=useState("form"),[data,setData]=useState({name:"",email:"",mobile:"",password:"",otp:""});
- const submit=async()=>{setLoading(true);await new Promise(r=>setTimeout(r,mode==="google"?2000:700));setLoading(false);if(mode==="forgot"&&step==="form"){setStep("otp");return}if(mode==="forgot"&&step==="otp"){setStep("success");return}onLogin({name:data.name||"Smart Operator",email:data.email||"operator@example.com",mobile:data.mobile||"01700000000",password:data.password||"demo1234",created:Date.now()});onClose()};
- return <div className="modal-backdrop"><div className="auth-modal">{loading&&<div className="absolute inset-0 z-10 flex items-center justify-center rounded-[32px] bg-[var(--bg)]/80 backdrop-blur-xl"><div className="text-center"><Loader2 size={34} className="mx-auto animate-spin text-[var(--accent)]"/><p className="mt-3 text-sm">{t("Securely authenticating…")}</p></div></div>}<button onClick={onClose} className="icon-btn absolute right-4 top-4"><X/></button><div className="brand-mark mx-auto"><Sparkles size={20}/></div><h2 className="mt-4 text-center text-2xl font-black">{mode==="forgot"?"Reset password":mode==="register"?"Create operator account":"Welcome back"}</h2>
- {step==="success"?<div className="py-8"><div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-500"><Check/></div><h3 className="mt-4 text-center text-xl font-bold">{t("OTP verified")}</h3><label className="field mt-5"><span>{t("New password")}</span><input type="password" value={data.password} onChange={e=>setData({...data,password:e.target.value})}/></label><button onClick={()=>{onLogin({name:"Smart Operator",email:data.email,mobile:"01700000000",password:data.password||"demo1234",created:Date.now()});onClose()}} className="primary-btn mt-4 w-full">{t("Save New Password")}</button></div>:step==="otp"?<><p className="mt-2 text-center text-sm text-[var(--muted)]">{t("A simulated OTP was sent to your saved contact.")}</p><label className="field mt-5"><span>{t("Verification OTP")}</span><input value={data.otp} onChange={e=>setData({...data,otp:e.target.value})} placeholder="123456"/></label><button onClick={submit} className="primary-btn mt-4 w-full">{t("Verify OTP")}</button></>:<><div className="mt-6 space-y-3">{mode==="register"&&<label className="field"><span>{t("Full name")}</span><input value={data.name} onChange={e=>setData({...data,name:e.target.value})}/></label>}<label className="field"><span>{t("Email")}</span><input type="email" value={data.email} onChange={e=>setData({...data,email:e.target.value})}/></label>{mode==="register"&&<label className="field"><span>{t("Mobile")}</span><input value={data.mobile} onChange={e=>setData({...data,mobile:e.target.value})}/></label>}{mode!=="forgot"&&<label className="field"><span>{t("Password")}</span><input type="password" value={data.password} onChange={e=>setData({...data,password:e.target.value})}/></label>}<button onClick={submit} className="primary-btn w-full">{mode==="register"?<><UserPlus size={16}/> Create Account</>:mode==="forgot"?<><Send size={16}/> Send OTP</>:<><LogIn size={16}/> Sign In</>}</button>{mode==="login"&&<button onClick={()=>setMode("google")} className="google-btn"><Globe2 size={16}/> Sign in with Google</button>}</div><div className="mt-5 flex justify-between text-xs text-[var(--muted)]">{mode!=="register"&&<button onClick={()=>setMode("register")} className="link">{t("Create account")}</button>}{mode==="login"&&<button onClick={()=>setMode("forgot")} className="link">{t("Forgot password?")}</button>}{mode!=="login"&&<button onClick={()=>setMode("login")} className="link">{t("Back to sign in")}</button>}</div></>}</div></div>
-}
-
 function Dashboard({setActive,user,lang}){
  const t=useT();
  const tx={dashboard:t("Dashboard"),overview:t("Overview"),workspace:t("Digital-center workspace"),subtitle:t("Photos, documents, finance, QR and business tasks in one place."),start:t("Start a job"),ai:t("Open AI Studio"),local:t("Local-first"),instant:t("Instant processing"),bd:t("Bangladesh ready"),popular:t("Popular operator tools"),core:t("core tools"),open:t("Open workspace"),features:t("What you can do"),qr:t("QR Code"),utilities:t("Core utilities"),wallet:t("Wallet"),session:t("Session"),credits:t("Credits"),dataSafe:t("Your data stays in your browser")};
  const cards=[
   ["scaler",t("Teletalk Multi-Scaler"),BadgeCheck,t("300×300 photo · 300×80 signature")],
   ["ink",t("Ink Saver Engine"),Printer,t("Clean scanned backgrounds before printing")],
-  ["pc",t("PC Builder"),HardDrive,t("BD hardware quotes & compatibility")],
   ["legal",t("Legal Architect"),FileText,t("Stamp-paper-ready document drafting")],
   ["ai",t("AI Studio"),Wand2,t("Letters, notices & business writing")],
   ["toolkit",t("Shop Toolkit"),QrCode,t("QR, passwords, text & operator utilities")]
@@ -497,12 +434,13 @@ function Dashboard({setActive,user,lang}){
 }
 
 export default function Page(){
- const [theme,setTheme]=useLocal("smart-theme",DEFAULT_THEME),[lang,setLang]=useLocal("smart-language",DEFAULT_LANGUAGE),[cursor,setCursor]=useLocal("smart-cursor",true),[active,setActive]=useState("home"),[mobile,setMobile]=useState(false),[sidebarCollapsed,setSidebarCollapsed]=useLocal("smart-sidebar-collapsed",false),[user,setUser]=useLocal("smart-user",null),[auth,setAuth]=useState(null),[toasts,setToasts]=useState([]);
+ const router=useRouter();
+ const [theme,setTheme]=useLocal("smart-theme",DEFAULT_THEME),[lang,setLang]=useLocal("smart-language",DEFAULT_LANGUAGE),[cursor,setCursor]=useLocal("smart-cursor",true),[active,setActive]=useState("home"),[mobile,setMobile]=useState(false),[sidebarCollapsed,setSidebarCollapsed]=useLocal("smart-sidebar-collapsed",false),[user,setUser]=useLocal("smart-user",null),[toasts,setToasts]=useState([]);
  const safeTheme=getSafeTheme(theme);
  const safeLang=getLocale(lang);
  const t=(key)=>translate(safeLang,key);
  const toast=(title,message,type="success")=>{const id=Date.now()+Math.random();setToasts(x=>[...x,{id,title,message,type}]);setTimeout(()=>setToasts(x=>x.filter(t=>t.id!==id)),3500)};
  useEffect(()=>{const safeTheme=getSafeTheme(theme);const safeLang=getLocale(lang);if(safeTheme!==theme)setTheme(safeTheme);if(safeLang!==lang)setLang(safeLang);document.documentElement.dataset.theme=safeTheme;document.documentElement.lang=safeLang},[theme,lang,setTheme,setLang]);
- const content=active==="home"?<Dashboard setActive={setActive} user={user} lang={safeLang}/>:active==="scaler"?<Scaler/>:active==="ink"?<InkSaver/>:active==="photo"?<PhotoCropper/>:active==="convert"?<Converter/>:active==="font"?<FontConverter/>:active==="signature"?<SignaturePad/>:active==="legal"?<Legal/>:active==="pc"?<PCBuilder/>:active==="calculator"?<CalculatorPack/>:active==="toolkit"?<Toolkit/>:active==="ai"?<AIStudio toast={toast}/>:<Profile user={user} setUser={setUser} onLogout={()=>setUser(null)}/>;
- return <LocaleContext.Provider value={safeLang}><div className="min-h-screen text-[var(--text)]"><CursorFX enabled={cursor}/><Topbar theme={safeTheme} setTheme={setTheme} lang={safeLang} setLang={setLang} cursor={cursor} setCursor={setCursor} user={user} onAuth={()=>setAuth("login")} onMenu={()=>setMobile(true)}/><div className={`mx-auto grid max-w-[1500px] ${sidebarCollapsed?"lg:grid-cols-[84px_1fr]":"lg:grid-cols-[280px_1fr]"}`}><Sidebar active={active} setActive={setActive} lang={safeLang} open={mobile} onClose={()=>setMobile(false)} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed}/><main className="min-w-0 p-4 lg:p-6"><div className="mb-5 flex items-center gap-2 text-xs text-[var(--muted)]"><button onClick={()=>setActive("home")} className="hover:text-[var(--accent)]">{t("Dashboard")}</button><ArrowRight size={12}/><span>{active==="home"?t("Overview"):t(TOOL_GROUPS.flatMap(g=>g.tools).find(x=>x[0]===active)?.[1]||"Workspace")}</span></div>{content}</main></div><Toasts items={toasts} onRemove={id=>setToasts(x=>x.filter(t=>t.id!==id))}/>{auth&&<AuthModal mode={auth} setMode={setAuth} onClose={()=>setAuth(null)} onLogin={u=>{setUser(u);toast(t("Welcome back"),`${u.name}`)}} toast={toast}/>}</div></LocaleContext.Provider>
+ const content=active==="home"?<Dashboard setActive={setActive} user={user} lang={safeLang}/>:active==="scaler"?<Scaler/>:active==="ink"?<InkSaver/>:active==="photo"?<PhotoCropper/>:active==="convert"?<Converter/>:active==="font"?<FontConverter/>:active==="signature"?<SignaturePad/>:active==="legal"?<Legal/>:active==="calculator"?<CalculatorPack/>:active==="toolkit"?<Toolkit/>:active==="ai"?<AIStudio toast={toast}/>:<Profile user={user} setUser={setUser} onLogout={()=>setUser(null)} onSignIn={()=>router.push("/login")}/>;
+ return <LocaleContext.Provider value={safeLang}><div className="min-h-screen text-[var(--text)]"><CursorFX enabled={cursor}/><Topbar theme={safeTheme} setTheme={setTheme} lang={safeLang} setLang={setLang} cursor={cursor} setCursor={setCursor} user={user} onAuth={()=>router.push("/login")} onMenu={()=>setMobile(true)}/><div className="app-layout mx-auto max-w-[1500px]"><Sidebar active={active} setActive={setActive} open={mobile} onClose={()=>setMobile(false)} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed}/><main className="app-main min-w-0 p-4 lg:p-6"><div className="mb-5 flex items-center gap-2 text-xs text-[var(--muted)]"><button onClick={()=>setActive("home")} className="hover:text-[var(--accent)]">{t("Dashboard")}</button><ArrowRight size={12}/><span>{active==="home"?t("Overview"):t(TOOL_GROUPS.flatMap(g=>g.tools).find(x=>x[0]===active)?.[1]||"Workspace")}</span></div>{content}</main></div><footer className="app-footer"><span>© {new Date().getFullYear()} Smart Solution</span><span>{t("Development by")} <strong>MSR Technologies</strong></span></footer><Toasts items={toasts} onRemove={id=>setToasts(x=>x.filter(t=>t.id!==id))}/></div></LocaleContext.Provider>
 }
